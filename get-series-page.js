@@ -21,16 +21,16 @@ module.exports.get = (event, context, callback) => {
 		})
 
 		res.on("end", (data) => {
-			var comics = JSON.parse(responseData).data.results
-			var comicsRes = {};
+			var series = JSON.parse(responseData).data.results
+			var seriesRes = {};
 
-			comics.map(
+			series.map(
 				function(evt){
-					comicsRes[evt.id] = evt.title
+					seriesRes[evt.id] = evt.title
 				}
 			)
 
-			callback(null, comicsRes);
+			callback(null, seriesRes);
 			});
 	});
 };
