@@ -1,13 +1,27 @@
-var http = require('http')
-var async = require('async')
-require('string_format')
-var AWS = require('aws-sdk')
-var s3 = new AWS.S3()
-var lambda = new AWS.Lambda({"region":"us-east-1"})
-var bucketName = "mejorge-hero-info"
+var http = require('http');
+var async = require('async');
+require('string_format');
+var AWS = require('aws-sdk');
+var s3 = new AWS.S3();
+var lambda = new AWS.Lambda({"region":"us-east-1"});
+var dynamodb = new AWS.DynamoDB({"region":"us-east-1"});
+var tableName = "mejorge-marvel-log";
+var bucketName = "mejorge-hero-info";
+var UUID = require('uuid-js');
+var itemData = {};
 
 module.exports.get = (event, context, callback) => {
+	itemData = {
+		"Id":UUID.create(),
+		"StartTime":new Date().getTime(),
+		"Character1":event.hero1.id,
+		"Character2":event.hero2.id,
+		"SingleQuantity": Math.ceil(event.hero1.comicAmount/100) + Math.ceil(event.hero2.comicAmount/100) 
+	};
+
 	var objectKey = getKeyFromIds(event.hero1.id, event.hero2.id);
+
+	logLambdaDataToDynamo(itemData);	
 
 	checkIfObjectExists(objectKey, function(exists){
 		if(exists){
@@ -88,6 +102,46 @@ function checkIfObjectExists (objectKey, callback) {
 			callback(true);
 		}
   	 });
+}
+
+function logLambdaDataToDynamo(data){
+	item = {
+		"Id":{
+			S:'' + data["Id"]
+		},
+		"StartTime":{
+			S:'' + data["StartTime"]
+		},
+		"EndTime":{
+			S:'' + new Date().getTime(),
+		},
+		"SingleQuantity":{
+			N:'' + data["SingleQuantity"]
+		},
+		"Character1":{
+			S:'' + data["Character1"]
+		},
+		"Character2":{
+			S:"" + data["Character2"]
+		},
+		//"MemoryReserved":{
+			//N:data["MemoryReserved"]
+		//},
+		//"MemoryUsed":{
+			//N:data["MemoryUsed"]
+		//}
+	};
+	
+	var params = {
+		Item: item,
+		TableName: "mejorge-marvel-log",
+		ReturnConsumedCapacity: "TOTAL"
+	};
+
+	dynamodb.putItem(params, function(err, data) {
+		if (err) console.log(err, err.stack);
+		else console.log(data);
+	});
 }
 
 function getKeyFromIds(id1, id2){

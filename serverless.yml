@@ -143,8 +143,18 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: mejorge-hero-info
-
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
+    HeroLogDynamo:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: mejorge-marvel-log
+        AttributeDefinitions:
+             -
+              AttributeName: Id
+              AttributeType: S
+        KeySchema:
+             -
+              AttributeName: Id
+              KeyType: HASH 
+        ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
